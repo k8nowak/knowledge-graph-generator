@@ -29,7 +29,7 @@ INT2,Vertical intercept,0.2
 SLP,Slope of a Line,0.3
 LGR,The second coordinate of a point on the graph that corresponds to a given first coordinate,0.2
 LP,Point on a line,0.2
-BVI,The parameter b in an equation of the form y = mx + b corresponds to the vertical intercept of tgraph of the equation,0.1
+BVI,The parameter b in an equation of the form y = mx + b corresponds to the vertical intercept of the graph of the equation,0.1
 YDV,y is the dependent variable when a linear function is represented by an equation of the form y = mx + b,0.1
 DVV,the dependent variable of a linear function corresponds to the vertical axis,0.1
 GLINE,The graph of an equation of the form y = mx + b is a straight line,0.2
@@ -48,7 +48,7 @@ DVOUT,The dependent variable is the variable that corresponds to the outputs of 
 ROCLFM,The rate of change of a linear function corresponds to the parameter m in an equation of the form y = mx + b that represents the function,0.3
 ROCLFS,The rate of change of a linear function corresponds to the slope of a line that represents the function,0.3
 LFIO,"For a linear function represented by an equation of the form y = mx+b, mx_1 +b is the output for input x_1",0.4
-LFYCOORD,For a linear function represented by a line in the coordinate plane the y-coordinate of the point on the graph is the ourput for the corresponding input,0.4
+LFYCOORD,For a linear function represented by a line in the coordinate plane the y-coordinate of the point on the graph is the output for the corresponding input,0.4
 SOLVARS,A solution to the equation includes a value for the first variable that corresponds to a value for the second variable,0.1
 COORDSOL,The coordinates of a point on a line in the coordinate plane represents a solution to the corresponding linear equation,0.1
 MSLOPE,The parameter m in an equation of the form y = mx + b corresponds to the slope of the graph of the equation,0.2

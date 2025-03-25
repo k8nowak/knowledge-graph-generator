@@ -11,64 +11,72 @@ def load_data():
     # Load the CSV files from the data directory
     concepts_df = pd.read_csv(root_dir / 'data' / 'concepts.csv')
     connections_df = pd.read_csv(root_dir / 'data' / 'connections.csv')
+    skills_df = pd.read_csv(root_dir / 'data' / 'skills.csv')  # Add skills data
     
-    return concepts_df, connections_df
+    return concepts_df, connections_df, skills_df
+
+def add_node_to_graph(G, node_id, node_type, name, **attributes):
+    """Helper function to add nodes with consistent attributes"""
+    G.add_node(node_id, type=node_type, name=name, **attributes)
+
+def get_node_name(G, node_id):
+    """Helper function to get node name with fallback"""
+    return G.nodes[node_id].get('name', node_id)
 
 def create_knowledge_graph():
     # Load data
-    concepts_df, connections_df = load_data()
+    concepts_df, connections_df, skills_df = load_data()
     
-    # Create a directed graph
     G = nx.DiGraph()
     
-    # Add all concepts as nodes
-    for _, row in concepts_df.dropna(subset=['node_id']).iterrows():
-        G.add_node(row['node_id'], 
-                  type='concept',
-                  name=row['node_name'],
-                  complexity=row['Complexity'])
+    # Create node_skills using dictionary
+    node_skills = {}
+    for _, row in skills_df.dropna(subset=['node_id']).iterrows():
+        node_id = row['node_id']
+        if node_id not in node_skills:
+            node_skills[node_id] = []
+        node_skills[node_id].append({
+            'skill_id': row['skill_id'],
+            'description': row['skill_description']
+        })
     
-    # Process connections based on type
-    for _, row in connections_df.iterrows():
+    # Add concepts as nodes
+    for _, row in concepts_df.dropna(subset=['node_id']).iterrows():
+        add_node_to_graph(G, 
+                         row['node_id'],
+                         'concept',
+                         row['node_name'],
+                         complexity=row['Complexity'],
+                         skills=node_skills.get(row['node_id'], []))
+
+    def process_connection(row):
+        """Helper function to process a single connection"""
         connection_id = row['ID']
         connection_type = row['connection_type']
         
-        # Check if all required nodes exist
-        nodes_exist = True
-        for col in ['node_id1', 'node_id2', 'node_id3']:
-            if pd.notna(row[col]) and row[col] not in G:
-                print(f"Warning: Node {row[col]} referenced in connection {connection_id} doesn't exist")
-                nodes_exist = False
+        # Check if all referenced nodes exist
+        nodes = [row[f'node_id{i}'] for i in range(1, 4) if pd.notna(row[f'node_id{i}'])]
+        if not all(node in G for node in nodes):
+            print(f"Warning: Some nodes referenced in connection {connection_id} don't exist")
+            return
         
-        if not nodes_exist:
-            continue
-            
         if connection_type == 'contains':
-            # For 'contains' relationships, create direct edges
             if pd.notna(row['node_id1']) and pd.notna(row['node_id2']):
                 G.add_edge(row['node_id1'], row['node_id2'], 
                           relationship='contains', 
                           connection_id=connection_id)
         else:
-            # For other relationships (like 'related'), reify them
-            G.add_node(connection_id, 
-                      type='reified_connection',
-                      connection_type=connection_type)
+            # Add reified connection node
+            node_name = concepts_df[concepts_df['node_id'] == connection_id]['node_name'].iloc[0]
+            add_node_to_graph(G, connection_id, 'reified_connection', node_name, connection_type=connection_type)
             
-            # Connect source nodes to the reified connection
-            if pd.notna(row['node_id1']):
-                G.add_edge(row['node_id1'], connection_id, role='neighbor')
-                G.add_edge(connection_id, row['node_id1'], role='neighbor')
-            
-            # Connect the reified connection to target nodes
-            if pd.notna(row['node_id2']):
-                G.add_edge(connection_id, row['node_id2'], role='neighbor')
-                G.add_edge(row['node_id2'], connection_id, role='neighbor')
-                
-            # Handle third node if present (for higher-order connections)
-            if pd.notna(row['node_id3']):
-                G.add_edge(connection_id, row['node_id3'], role='neighbor')
-                G.add_edge(row['node_id3'], connection_id, role='neighbor')
+            # Add bidirectional edges for all connected nodes
+            for node in nodes:
+                G.add_edge(node, connection_id, role='neighbor')
+                G.add_edge(connection_id, node, role='neighbor')
+    
+    # Process all connections
+    connections_df.apply(process_connection, axis=1)
     
     return G
 
@@ -101,10 +109,8 @@ def trace_container_path(G, node_id, path=None):
         path = [node_id]
     
     # Find nodes that contain this node
-    containers = []
-    for source, target, data in G.edges(data=True):
-        if target == node_id and 'relationship' in data and data['relationship'] == 'contains':
-            containers.append(source)
+    containers = [source for source, target, data in G.edges(data=True)
+                 if target == node_id and data.get('relationship') == 'contains']
     
     if not containers:
         return path
@@ -119,6 +125,34 @@ def trace_container_path(G, node_id, path=None):
     
     return path
 
+def explore_concept_relationships(G, node_id):
+    """Helper function to explore concept relationships"""
+    related_concepts = {}
+    for neighbor in G.neighbors(node_id):
+        if G.nodes[neighbor].get('type') == 'reified_connection':
+            connection_type = G.nodes[neighbor].get('connection_type', 'related')
+            related = [(n, neighbor) for n in G.neighbors(neighbor) 
+                      if G.nodes[n].get('type') == 'concept' and n != node_id]
+            if related:
+                related_concepts.setdefault(connection_type, []).extend(related)
+    
+    if related_concepts:
+        print("\nRelated concepts:")
+        for rel_type, concepts in related_concepts.items():
+            print(f"\n  {rel_type}:")
+            for concept, connection_id in set(concepts):
+                print(f"    - {concept} ({get_node_name(G, concept)}) "
+                      f"through {connection_id} ")
+
+def explore_reified_connection(G, node_id):
+    """Helper function to explore reified connection"""
+    connected_concepts = [n for n in G.neighbors(node_id) 
+                         if G.nodes[n].get('type') == 'concept']
+    if connected_concepts:
+        print("\nConnects concepts:")
+        for concept in connected_concepts:
+            print(f"  - {concept} ({get_node_name(G, concept)})")
+
 def explore_node(G, node_id):
     """Explore a node and its connections"""
     if node_id not in G:
@@ -126,86 +160,61 @@ def explore_node(G, node_id):
         return
     
     try:
-        node_type = G.nodes[node_id].get('type', 'unknown')
-        print(f"\nExploring {'concept' if node_type == 'concept' else 'reified connection'}: {node_id}")
-        print("Attributes:", dict(G.nodes[node_id]))  # Convert to dict for safer printing
+        node_attrs = G.nodes[node_id]
+        node_type = node_attrs.get('type', 'unknown')
+        print(f"\nExploring {node_type}: {node_id} ({get_node_name(G, node_id)})")
         
-        # Add container traceback
-        container_path = trace_container_path(G, node_id)
-        if len(container_path) > 1:  # If there's more than just the current node
-            print("\nContainer hierarchy:")
-            path_str = " → ".join(f"{node} ({G.nodes[node].get('name', node)})" 
-                                for node in container_path)
-            print(f"  {path_str}")
+        # Print attributes (excluding skills)
+        print("\nAttributes:")
+        attrs = {k: v for k, v in node_attrs.items() if k != 'skills'}
+        for key, value in attrs.items():
+            print(f"  {key}: {value}")
         
-        # Find containment relationships
-        contains = []
-        contained_by = []
-        for source, target, data in G.edges(data=True):
-            if 'relationship' in data and data['relationship'] == 'contains':
-                if source == node_id:
-                    contains.append(target)
-                elif target == node_id:
-                    contained_by.append(source)
+        # Print skills if they exist
+        if skills := node_attrs.get('skills', []):
+            print("\nSkills:")
+            for skill in skills:
+                print(f"  - {skill['skill_id']}: {skill['description']}")
+        
+        # Print container hierarchy
+        if container_path := trace_container_path(G, node_id):
+            if len(container_path) > 1:
+                print("\nContainer hierarchy:")
+                path_str = " → ".join(f"{node} ({get_node_name(G, node)})" for node in container_path)
+                print(f"  {path_str}")
+        
+        # Get containment relationships
+        contains = [target for source, target, data in G.edges(data=True)
+                   if source == node_id and data.get('relationship') == 'contains']
+        contained_by = [source for source, target, data in G.edges(data=True)
+                       if target == node_id and data.get('relationship') == 'contains']
         
         if contains:
             print("\nContains:")
             for target in contains:
-                print(f"  - {target} ({G.nodes[target].get('name', target)})")
+                print(f"  - {target} ({get_node_name(G, target)})")
         if contained_by:
             print("\nContained by:")
             for source in contained_by:
-                print(f"  - {source} ({G.nodes[source].get('name', source)})")
+                print(f"  - {source} ({get_node_name(G, source)})")
         
-        # Handle exploration differently based on node type
+        # Handle concept/reified connection specific exploration
         if node_type == 'concept':
-            # Find related concepts through reified connections
-            related_concepts = {}
-            for neighbor in G.neighbors(node_id):
-                if G.nodes[neighbor].get('type') == 'reified_connection':
-                    connection_type = G.nodes[neighbor].get('connection_type', 'related')
-                    # Find other concepts connected to this reified connection
-                    related = [(n, neighbor) for n in G.neighbors(neighbor) 
-                             if G.nodes[n].get('type') == 'concept' and n != node_id]
-                    if related:
-                        if connection_type not in related_concepts:
-                            related_concepts[connection_type] = []
-                        related_concepts[connection_type].extend(related)
-            
-            if related_concepts:
-                print("\nRelated concepts:")
-                for rel_type, concepts in related_concepts.items():
-                    print(f"\n  {rel_type}:")
-                    for concept, connection_id in set(concepts):  # Remove duplicates
-                        print(f"    - {concept} ({G.nodes[concept].get('name', concept)}) "
-                              f"through {connection_id}")
-        
+            explore_concept_relationships(G, node_id)
         elif node_type == 'reified_connection':
-            # For reified connections, show all connected concepts
-            connected_concepts = [n for n in G.neighbors(node_id) 
-                               if G.nodes[n].get('type') == 'concept']
-            if connected_concepts:
-                print("\nConnects concepts:")
-                for concept in connected_concepts:
-                    print(f"  - {concept} ({G.nodes[concept].get('name', concept)})")
+            explore_reified_connection(G, node_id)
     
     except Exception as e:
         print(f"Error exploring node {node_id}: {str(e)}")
 
-
 def export_to_json(G, filename="knowledge_graph.json"):
     """
     Export the knowledge graph to a simplified JSON format that's easier for LLMs to process.
-    Focuses on clear representation of concepts and their relationships.
     """
     # Get the project root directory
     root_dir = Path(__file__).parent.parent
-    
-    # Create output directory if it doesn't exist
     output_dir = root_dir / 'output'
     output_dir.mkdir(exist_ok=True)
-    
-    # Prepare the full output path
     output_path = output_dir / filename
     
     # Prepare the simplified structure
@@ -214,35 +223,31 @@ def export_to_json(G, filename="knowledge_graph.json"):
         "relationships": []
     }
     
-    # Add concepts with minimal metadata
+    # Add concepts with metadata including skills
     for node, attrs in G.nodes(data=True):
         if attrs.get('type') == 'concept':
             graph_data["concepts"][node] = {
                 "name": attrs.get('name', node),
                 "complexity": attrs.get('complexity', "N/A"),
-                "contains": [],     # List of concepts this one contains
-                "contained_by": [], # List of concepts that contain this one
-                "related": {}       # Dict of related concepts grouped by relationship type
+                "skills": attrs.get('skills', []),
+                "contains": [],     
+                "contained_by": [], 
+                "related": {}       
             }
     
     # Process all edges to build relationships
     for source, target, attrs in G.edges(data=True):
         if 'relationship' in attrs and attrs['relationship'] == 'contains':
-            # Handle direct contains relationships
             if source in graph_data["concepts"] and target in graph_data["concepts"]:
                 graph_data["concepts"][source]["contains"].append(target)
                 graph_data["concepts"][target]["contained_by"].append(source)
         
         elif 'role' in attrs and attrs['role'] == 'neighbor':
-            # Handle reified relationships
             if source in graph_data["concepts"] and target in G.nodes:
                 connection_type = G.nodes[target].get('connection_type', 'related')
-                
-                # Find all other concepts connected to this reified connection
                 neighbors = [n for n in G.neighbors(target) 
                            if n in graph_data["concepts"] and n != source]
                 
-                # Add these concepts as related
                 if neighbors:
                     if connection_type not in graph_data["concepts"][source]["related"]:
                         graph_data["concepts"][source]["related"][connection_type] = []
@@ -253,7 +258,7 @@ def export_to_json(G, filename="knowledge_graph.json"):
         for rel_type in concept_data["related"]:
             concept_data["related"][rel_type] = list(set(concept_data["related"][rel_type]))
     
-    # Add a simple explanation for LLMs
+    # Add explanation for LLMs
     graph_data["explanation"] = """
     This knowledge graph shows concepts and their relationships.
     - Each concept may contain other concepts (hierarchical relationship)

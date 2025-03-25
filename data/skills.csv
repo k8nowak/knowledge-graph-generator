@@ -1,0 +1,85 @@
+skill_id,skill_description,node_id
+S1,Determine the point on the graph of y = mx+b given a y-value,COORDSI
+S2,Determine the point on the graph of y = mx+b given an x-value,COORDSI
+S3,Find an input-output pair of a linear function represented by a line in the coordinate plane,LFYCOORD
+S4,Find an input-output pair of a linear function represented by an equation of the form y = mx+b,LFIO
+S5,"Given 2 points on a line, determine the equation",GLINE
+S6,"Given a graph of a linear function, identify the dependent variable",DVV
+S7,"Given a graph of a linear function, identify the independent variable",IVHA
+S8,"Given a graph, determine whether it represents a linear function or not",LFLINE
+S9,"Given a line in the coordinate plane, estimate its slope",SLP
+S10,"Given a line in the coordinate plane, estimate its vertical intercept",INT2
+S11,"Given a line in the coordinate plane, estimate the coordinates of a point",LP
+S12,"Given a linear equation and an ordered pair, determine if it is a solution to the equation",LSOL2
+S13,"Given a linear equation in y = mx +b form, identify the coefficient of the linear term",m
+S14,"Given a linear equation in y = mx +b form, identify the constant term",b
+S15,"Given a linear equation in y = mx +b form, identify the linear term",mx
+S16,"Given a point and the slope of a line, find the equation",GLINE
+S17,"Given a point in the coordinate plane, estimate its coordinates",C1C2
+S18,"Given a point on a line, identify the corresponding solution to the equation",COORDSOL
+S19,"Given a point on a straight-line graph, identify the corresponding input-output pair for the function",IOCOORD
+S20,"Given a solution to a linear equation in two variables, identify the corresponding input-output pair",IOSOL
+S21,"Given a solution to an equation, identify the corresponding point on the line",COORDSOL
+S22,"Given a straight-line graph, determine its equation",GLINE
+S23,"Given a straight-line graph, determine its slope",GLINE
+S24,"Given a y value, find the corresponding x value on a straight line",LG
+S25,"Given an equation Ax+By = C, find the slope",GLINE
+S26,"Given an equation Ax+By = C, find the x-intercept",GLINE
+S27,"Given an equation Ax+By = C, find the y-intercept",GLINE
+S28,"Given an equation Ax+By=C, sketch the graph",GLINE
+S29,"Given an equation of the form y = mx + b that represents a linear function, determine the initial value",LFUNSI
+S30,"Given an equation of the form y = mx + b that represents a linear function, determine the rate of change",LFUNSI
+S31,"Given an equation y = mx + b, find the slope of the graph",GLINE
+S32,"Given an equation y = mx + b, find the x-intercept",GLINE
+S33,"Given an equation y = mx + b, find the y-intercept",GLINE
+S34,"Given an equation y = mx + b, sketch the graph",GLINE
+S35,"Given an input-output pair for a linear function, identify the corresponding point on its graph",IOCOORD
+S36,"Given an input-output pair for a linear function, identify the corresponding solution to a linear equation that represents it",IOSOL
+S37,"Given an input-output pair where the input is 0, identify the initial value",LIV
+S38,"Given an input-output pair, determine the input",LIOP
+S39,"Given an input-output pair, determine the output",LIOP
+S40,"Given an x value, find the corresponding y value on a straight line",LG
+S41,"Given input-output pair (0, b), identify the initial value",IVIO
+S42,"Given linear function y = mx + b, determine the initial value",IVLFB
+S43,"Given linear function y = mx + b, determine the LROC",ROCLFM
+S44,"Given the graph of a linear function, determine the initial value",IVVI
+S45,"Given the graph of a linear function, determine the LROC",ROCLFS
+S46,"Given the initial value and rate of change of a linear function, determine an equation that represents it",LFUNSI
+S47,"Given the initial value of a linear function, determine the coefficient of the constant term in the equation that represents it",IVLFB
+S48,"Given the initial value of a linear function, determine the y-intercept of its graph",IVVI
+S49,"Given the initial value, identify the input that results in this output",IVIO
+S50,"Given the rate of change of a linear function, determine the coefficient of the linear term in the equation that represents it",ROCLFM
+S51,"Given the rate of change of a linear function, determine the slope of its graph",ROCLFS
+S52,"Given the slope of a line and a point on it, sketch the graph",SLP
+S53,"Given the slope of a line, determine the coefficient of the linear term in the equation that represents it",MSLOPE
+S54,"Given the vertical intercept of a line, determine the constant term in the equation that represents it",BVI
+S55,"Given two input-output pairs, determine the LROC",LROC
+S56,"Given two points on a line, sketch its graph",LG
+S57,"Given y = mx + b, determine the slope of its graph",MSLOPE
+S58,"Given y = mx + b, determine the y-intercept of its graph",BVI
+S59,Identify the dependent variable of a linear function given y = mx + b,YDV
+S60,Identify the independent variable of a linear function given y = mx + b,IVSI
+S61,Recognize that a straight line in the coordinate plane is the graph of a linear equation,GLINE
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,LFUNSI
