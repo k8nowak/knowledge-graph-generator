@@ -1,4 +1,4 @@
-## This script is used to create a knowledge graph and extract some sample information from it.
+## These are just the functions used to create the knowledge graph.
 
 import pandas as pd
 import networkx as nx
@@ -277,20 +277,3 @@ def export_to_json(G, filename="knowledge_graph.json"):
     
     print(f"Knowledge graph exported to {output_path}")
     return graph_data
-
-if __name__ == "__main__":
-    # Create the knowledge graph
-    knowledge_graph = create_knowledge_graph()
-    
-    # Analyze the graph
-    analyze_graph(knowledge_graph)
-    
-    # Explore some important nodes
-    explore_node(knowledge_graph, "LIOP")  # A concept node
-    explore_node(knowledge_graph, "RLFIO")  # A reified connection
-    explore_node(knowledge_graph, "b")  # A deep node
-    
-    # Export to JSON for LLM consumption
-    export_to_json(knowledge_graph, "knowledge_graph.json")
-    
-    print("\nKnowledge graph successfully created and stored in 'knowledge_graph' variable") 

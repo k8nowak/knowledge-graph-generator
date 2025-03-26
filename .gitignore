@@ -37,3 +37,5 @@ output/
 
 # Keep data directory but ignore specific files if needed
 # data/*.csv  # Uncomment this if you don't want to track CSV files 
+
+.env 
